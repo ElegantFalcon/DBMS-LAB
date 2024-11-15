@@ -1,0 +1,1807 @@
+ 
+
+    SQL Queries and Triggers
+
+    Draw Me A Picture
+    C-SCAN Sorting Explanation
+    Linker Loader Explanation
+    SIC/XE Object Code Processing
+
+Upgrade planMore access to the best models
+
+    You said:
+
+QUS (2)-1.pdf
+PDF
+Generate answers to all the questions in the pdf. also explain every concept and syntax related to this
+provide the whole query and dummy vales too
+ChatGPT said:
+
+Here is a breakdown of solutions, explanations, and sample queries for the SQL and PL/SQL tasks based on the provided schema and questions in your file.
+Section 1: LibraryDatabase Schema
+
+Tables:
+
+    BOOK (Book_id, Title, Publisher_Name, Pub_Year)
+    BOOK_AUTHORS (Book_id, Author_Name)
+    PUBLISHER (Name, Address, Phone)
+    BOOK_COPIES (Book_id, Branch_id, No_of_Copies)
+    BOOK_LENDING (Book_id, Branch_id, Card_No, Date_Out, Due_Date)
+    LIBRARY_BRANCH (Branch_id, Branch_Name, Address)
+
+Query 1: Retrieve details of all books
+
+SELECT b.Book_id, b.Title, b.Publisher_Name, a.Author_Name, c.No_of_Copies, l.Branch_Name
+FROM BOOK b
+JOIN BOOK_AUTHORS a ON b.Book_id = a.Book_id
+JOIN BOOK_COPIES c ON b.Book_id = c.Book_id
+JOIN LIBRARY_BRANCH l ON c.Branch_id = l.Branch_id;
+
+This query uses JOINs to retrieve book details, including each author, number of copies per branch, and branch details.
+Query 2: Particulars of borrowers who borrowed more than 3 books from Jan 2017 to Jun 2017
+
+SELECT Card_No, COUNT(Book_id) AS Books_Borrowed
+FROM BOOK_LENDING
+WHERE Date_Out BETWEEN '2017-01-01' AND '2017-06-30'
+GROUP BY Card_No
+HAVING COUNT(Book_id) > 3;
+
+The WHERE clause filters by date, GROUP BY groups by borrower, and HAVING checks for more than 3 books.
+Query 3: View of books published in 2020
+
+CREATE VIEW Books_Published_2020 AS
+SELECT * FROM BOOK WHERE Pub_Year = 2020;
+
+The CREATE VIEW command creates a virtual table to store books from 2020.
+Query 4: View of available books with copies
+
+CREATE VIEW Available_Books AS
+SELECT b.Book_id, b.Title, SUM(c.No_of_Copies) AS Total_Copies
+FROM BOOK b
+JOIN BOOK_COPIES c ON b.Book_id = c.Book_id
+GROUP BY b.Book_id, b.Title;
+
+This query aggregates the number of copies across branches using SUM.
+Trigger for new book insert
+
+CREATE OR REPLACE TRIGGER New_Book_Inserted
+AFTER INSERT ON BOOK
+FOR EACH ROW
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('New book is inserted');
+END;
+
+This AFTER INSERT trigger outputs a message when a new book is added.
+Section 2: LibraryDatabase (Similar schema, slightly different queries)
+Query 2: Borrowers with more than 5 books from Jan 2022 to Jun 2022
+
+SELECT Card_No, COUNT(Book_id) AS Books_Borrowed
+FROM BOOK_LENDING
+WHERE Date_Out BETWEEN '2022-01-01' AND '2022-06-30'
+GROUP BY Card_No
+HAVING COUNT(Book_id) > 5;
+
+Query 3: Books with more than 5 copies in descending order
+
+SELECT b.Book_id, b.Title, SUM(c.No_of_Copies) AS Total_Copies
+FROM BOOK b
+JOIN BOOK_COPIES c ON b.Book_id = c.Book_id
+GROUP BY b.Book_id, b.Title
+HAVING SUM(c.No_of_Copies) > 5
+ORDER BY Total_Copies DESC;
+
+PL/SQL program to display Title, Publisher name, and Pub year using a cursor
+
+DECLARE
+  CURSOR book_cursor IS
+    SELECT Title, Publisher_Name, Pub_Year FROM BOOK;
+  v_Title BOOK.Title%TYPE;
+  v_Publisher_Name BOOK.Publisher_Name%TYPE;
+  v_Pub_Year BOOK.Pub_Year%TYPE;
+BEGIN
+  OPEN book_cursor;
+  LOOP
+    FETCH book_cursor INTO v_Title, v_Publisher_Name, v_Pub_Year;
+    EXIT WHEN book_cursor%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('Title: ' || v_Title || ', Publisher: ' || v_Publisher_Name || ', Year: ' || v_Pub_Year);
+  END LOOP;
+  CLOSE book_cursor;
+END;
+
+Section 3: OrderDatabase Schema
+
+Tables:
+
+    SALESMAN (Salesman_id, Name, City, Commission)
+    CUSTOMER (Customer_id, Cust_Name, City, Grade, Salesman_id)
+    ORDERS (Ord_No, Purchase_Amt, Ord_Date, Customer_id, Salesman_id)
+
+Query 1: Customers with grades above Bangalore's average
+
+SELECT COUNT(*) AS Customer_Count
+FROM CUSTOMER
+WHERE Grade > (SELECT AVG(Grade) FROM CUSTOMER WHERE City = 'Bangalore');
+
+This query uses a subquery to find the average grade in Bangalore.
+Procedure to store Customer details
+
+CREATE OR REPLACE PROCEDURE Store_Customer_Details (cust_name IN VARCHAR2, cust_city IN VARCHAR2, cust_grade IN NUMBER) IS
+BEGIN
+  INSERT INTO CUSTOMER (Cust_Name, City, Grade) VALUES (cust_name, cust_city, cust_grade);
+  COMMIT;
+END;
+
+This procedure accepts parameters and inserts them into the CUSTOMER table.
+Section 4: CollegeDatabase Schema
+
+Tables:
+
+    STUDENT (USN, SName, Address, Phone, Gender)
+    SEMSEC (SSID, Sem, Sec)
+    CLASS (USN, SSID)
+    SUBJECT (Subcode, Title, Sem, Credits)
+    IAMARKS (USN, Subcode, SSID, Test1, Test2, Test3, FinalIA)
+
+Query 1: List of students in the fourth semester 'C' section
+
+SELECT s.*
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+WHERE ss.Sem = 4 AND ss.Sec = 'C';
+
+Trigger for new student insert
+
+CREATE OR REPLACE TRIGGER New_Student_Inserted
+AFTER INSERT ON STUDENT
+FOR EACH ROW
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('New student is inserted');
+END;
+
+Section 5: CompanyDatabase Schema
+
+Tables:
+
+    EMPLOYEE (SSN, Name, Address, Sex, Salary, SuperSSN, DNo)
+    DEPARTMENT (DNo, DName, MgrSSN, MgrStartDate)
+    PROJECT (PNo, PName, PLocation, DNo)
+    WORKS_ON (SSN, PNo, Hours)
+
+PL/SQL program to display Employee name, Salary, and department number using cursor
+
+DECLARE
+  CURSOR emp_cursor IS
+    SELECT Name, Salary, DNo FROM EMPLOYEE;
+  v_Name EMPLOYEE.Name%TYPE;
+  v_Salary EMPLOYEE.Salary%TYPE;
+  v_DNo EMPLOYEE.DNo%TYPE;
+BEGIN
+  OPEN emp_cursor;
+  LOOP
+    FETCH emp_cursor INTO v_Name, v_Salary, v_DNo;
+    EXIT WHEN emp_cursor%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('Employee: ' || v_Name || ', Salary: ' || v_Salary || ', Dept: ' || v_DNo);
+  END LOOP;
+  CLOSE emp_cursor;
+END;
+
+These examples cover the primary queries, views, and PL/SQL constructs for each section. Let me know if you need further details on any part!
+You said:
+explain all the sql concepts i need to know to understand this
+ChatGPT said:
+
+To fully understand these SQL and PL/SQL queries, let's cover the foundational concepts and key SQL elements involved.
+1. SQL Basics
+
+    SQL (Structured Query Language): SQL is the language used for managing and querying relational databases. It includes commands to insert, update, delete, and retrieve data from databases.
+
+Key Types of SQL Commands
+
+    DDL (Data Definition Language): Commands that define or modify database structure. Examples: CREATE, ALTER, DROP.
+    DML (Data Manipulation Language): Commands that manage data within tables. Examples: SELECT, INSERT, UPDATE, DELETE.
+    DCL (Data Control Language): Commands that control access to data. Examples: GRANT, REVOKE.
+    TCL (Transaction Control Language): Commands that handle transactions in SQL. Examples: COMMIT, ROLLBACK.
+
+2. Database Schema and Table Joins
+
+    Database Schema: The schema defines the structure of the database, including tables, columns, data types, and relationships between tables.
+
+    Tables and Columns: Tables are organized in rows and columns. Each table has a primary key, a unique identifier for its rows, and foreign keys to connect to other tables.
+
+Joins
+
+    JOIN: Combines rows from two or more tables based on related columns. Key join types:
+        INNER JOIN: Only returns records where there is a match in both tables.
+        LEFT JOIN: Returns all records from the left table and matching records from the right table.
+        RIGHT JOIN: Returns all records from the right table and matching records from the left.
+        FULL JOIN: Returns all records when there is a match in either table.
+
+Example:
+
+SELECT Book_id, Title, Author_Name
+FROM BOOK
+JOIN BOOK_AUTHORS ON BOOK.Book_id = BOOK_AUTHORS.Book_id;
+
+This INNER JOIN retrieves records only when the book has an author in BOOK_AUTHORS.
+3. Aggregations and Grouping
+
+    Aggregate Functions: SQL provides functions to calculate summary values:
+        COUNT(): Counts the number of rows.
+        SUM(): Adds values.
+        AVG(): Calculates the average value.
+        MIN() and MAX(): Find the minimum and maximum values.
+
+    GROUP BY: Groups rows that have the same values in specified columns. Often used with aggregate functions.
+
+Example:
+
+SELECT Publisher_Name, COUNT(Book_id) AS Total_Books
+FROM BOOK
+GROUP BY Publisher_Name;
+
+This query groups books by publisher and counts the total books per publisher.
+4. Filtering and Conditional Logic
+
+    WHERE: Filters records based on specified conditions.
+
+    HAVING: Filters records after GROUP BY, allowing conditional aggregation.
+
+Example:
+
+SELECT Card_No, COUNT(Book_id) AS Books_Borrowed
+FROM BOOK_LENDING
+WHERE Date_Out BETWEEN '2022-01-01' AND '2022-06-30'
+GROUP BY Card_No
+HAVING COUNT(Book_id) > 5;
+
+Here, WHERE filters rows by date, GROUP BY groups by Card_No, and HAVING applies a condition on grouped data.
+5. Views and Virtual Tables
+
+    Views: A virtual table that stores SQL queries, simplifying complex queries and securing underlying data.
+
+Example:
+
+CREATE VIEW Books_Published_2020 AS
+SELECT * FROM BOOK WHERE Pub_Year = 2020;
+
+This view allows us to access all books published in 2020 as if they were in a separate table.
+6. Triggers and Procedures
+
+    Triggers: SQL procedures that automatically execute in response to certain events, like INSERT, UPDATE, or DELETE.
+        AFTER INSERT: Executes after a new row is inserted.
+
+Example:
+
+CREATE OR REPLACE TRIGGER New_Book_Inserted
+AFTER INSERT ON BOOK
+FOR EACH ROW
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('New book is inserted');
+END;
+
+    Stored Procedures: Reusable SQL code blocks that perform specific tasks. Often used for complex operations.
+
+Example:
+
+CREATE OR REPLACE PROCEDURE Store_Customer_Details (cust_name IN VARCHAR2, cust_city IN VARCHAR2, cust_grade IN NUMBER) IS
+BEGIN
+  INSERT INTO CUSTOMER (Cust_Name, City, Grade) VALUES (cust_name, cust_city, cust_grade);
+  COMMIT;
+END;
+
+This procedure inserts customer details into the CUSTOMER table.
+7. Cursors in PL/SQL
+
+    Cursors: A mechanism in PL/SQL to retrieve multiple rows and process them one by one. Used when the result of a query needs to be iterated over.
+
+Example:
+
+DECLARE
+  CURSOR book_cursor IS
+    SELECT Title, Publisher_Name, Pub_Year FROM BOOK;
+BEGIN
+  OPEN book_cursor;
+  LOOP
+    FETCH book_cursor INTO v_Title, v_Publisher_Name, v_Pub_Year;
+    EXIT WHEN book_cursor%NOTFOUND;
+  END LOOP;
+  CLOSE book_cursor;
+END;
+
+This cursor retrieves data from BOOK and iterates through each row, printing the book title, publisher, and publication year.
+8. Nested Queries and Subqueries
+
+    Subqueries: A query within another query, often used to retrieve data for comparison or filtering.
+
+Example:
+
+SELECT COUNT(*) AS Customer_Count
+FROM CUSTOMER
+WHERE Grade > (SELECT AVG(Grade) FROM CUSTOMER WHERE City = 'Bangalore');
+
+This query counts customers with a grade above the average grade of customers in Bangalore.
+9. Conditionals and Case Statements
+
+    CASE: Allows conditional logic within SQL queries, similar to if-else statements in programming.
+
+Example:
+
+SELECT 
+  CASE 
+    WHEN FinalIA BETWEEN 17 AND 20 THEN 'Outstanding'
+    WHEN FinalIA BETWEEN 12 AND 16 THEN 'Average'
+    ELSE 'Weak'
+  END AS Category
+FROM STUDENT;
+
+This CASE statement categorizes students based on their FinalIA scores.
+10. Transactions
+
+    Transaction Control: Ensures data consistency and integrity.
+        COMMIT: Saves all changes made during the transaction.
+        ROLLBACK: Undoes all changes made since the last commit.
+
+Example:
+
+BEGIN
+  INSERT INTO CUSTOMER (Cust_Name, City, Grade) VALUES ('John Doe', 'Mumbai', 2);
+  COMMIT;
+END;
+
+These concepts provide a foundation for understanding the SQL and PL/SQL code provided in the tasks. Let me know if you'd like deeper insight into any specific area!
+You said:
+for each of the question, also create database,tables and queries to insert dummy data
+ChatGPT said:
+
+Certainly! Let's go through the setup for each schema in your assignment, including database creation, table creation, and inserting dummy data. I'll provide queries to create each database schema and fill it with example data that can be used with the SQL queries.
+Section 1: LibraryDatabase Schema
+1.1A Database Creation and Table Setup
+
+-- Create Database
+CREATE DATABASE LibraryDatabase;
+
+-- Switch to the LibraryDatabase
+USE LibraryDatabase;
+
+-- Table Creation
+CREATE TABLE BOOK (
+  Book_id INT PRIMARY KEY,
+  Title VARCHAR(100),
+  Publisher_Name VARCHAR(50),
+  Pub_Year INT
+);
+
+CREATE TABLE BOOK_AUTHORS (
+  Book_id INT,
+  Author_Name VARCHAR(50),
+  FOREIGN KEY (Book_id) REFERENCES BOOK(Book_id)
+);
+
+CREATE TABLE PUBLISHER (
+  Name VARCHAR(50) PRIMARY KEY,
+  Address VARCHAR(100),
+  Phone VARCHAR(15)
+);
+
+CREATE TABLE BOOK_COPIES (
+  Book_id INT,
+  Branch_id INT,
+  No_of_Copies INT,
+  FOREIGN KEY (Book_id) REFERENCES BOOK(Book_id)
+);
+
+CREATE TABLE BOOK_LENDING (
+  Book_id INT,
+  Branch_id INT,
+  Card_No INT,
+  Date_Out DATE,
+  Due_Date DATE,
+  FOREIGN KEY (Book_id) REFERENCES BOOK(Book_id)
+);
+
+CREATE TABLE LIBRARY_BRANCH (
+  Branch_id INT PRIMARY KEY,
+  Branch_Name VARCHAR(50),
+  Address VARCHAR(100)
+);
+
+Dummy Data Insertion
+
+-- Insert Data into BOOK
+INSERT INTO BOOK (Book_id, Title, Publisher_Name, Pub_Year) VALUES
+(1, 'The Great Gatsby', 'Penguin', 1925),
+(2, 'To Kill a Mockingbird', 'HarperCollins', 1960),
+(3, '1984', 'Penguin', 1949);
+
+-- Insert Data into BOOK_AUTHORS
+INSERT INTO BOOK_AUTHORS (Book_id, Author_Name) VALUES
+(1, 'F. Scott Fitzgerald'),
+(2, 'Harper Lee'),
+(3, 'George Orwell');
+
+-- Insert Data into PUBLISHER
+INSERT INTO PUBLISHER (Name, Address, Phone) VALUES
+('Penguin', '123 Book St', '123-456-7890'),
+('HarperCollins', '456 Novel Rd', '234-567-8901');
+
+-- Insert Data into BOOK_COPIES
+INSERT INTO BOOK_COPIES (Book_id, Branch_id, No_of_Copies) VALUES
+(1, 1, 3),
+(1, 2, 2),
+(2, 1, 5),
+(3, 2, 4);
+
+-- Insert Data into BOOK_LENDING
+INSERT INTO BOOK_LENDING (Book_id, Branch_id, Card_No, Date_Out, Due_Date) VALUES
+(1, 1, 101, '2022-01-10', '2022-01-20'),
+(2, 1, 102, '2022-01-15', '2022-01-25');
+
+-- Insert Data into LIBRARY_BRANCH
+INSERT INTO LIBRARY_BRANCH (Branch_id, Branch_Name, Address) VALUES
+(1, 'Downtown', '789 Main St'),
+(2, 'Uptown', '456 High St');
+
+Section 2: OrderDatabase Schema
+2.1B Database Creation and Table Setup
+
+-- Create Database
+CREATE DATABASE OrderDatabase;
+
+-- Switch to the OrderDatabase
+USE OrderDatabase;
+
+-- Table Creation
+CREATE TABLE SALESMAN (
+  Salesman_id INT PRIMARY KEY,
+  Name VARCHAR(50),
+  City VARCHAR(50),
+  Commission DECIMAL(5, 2)
+);
+
+CREATE TABLE CUSTOMER (
+  Customer_id INT PRIMARY KEY,
+  Cust_Name VARCHAR(50),
+  City VARCHAR(50),
+  Grade INT,
+  Salesman_id INT,
+  FOREIGN KEY (Salesman_id) REFERENCES SALESMAN(Salesman_id)
+);
+
+CREATE TABLE ORDERS (
+  Ord_No INT PRIMARY KEY,
+  Purchase_Amt DECIMAL(10, 2),
+  Ord_Date DATE,
+  Customer_id INT,
+  Salesman_id INT,
+  FOREIGN KEY (Customer_id) REFERENCES CUSTOMER(Customer_id),
+  FOREIGN KEY (Salesman_id) REFERENCES SALESMAN(Salesman_id)
+);
+
+Dummy Data Insertion
+
+-- Insert Data into SALESMAN
+INSERT INTO SALESMAN (Salesman_id, Name, City, Commission) VALUES
+(1, 'John Doe', 'Bangalore', 0.15),
+(2, 'Jane Smith', 'Mumbai', 0.12);
+
+-- Insert Data into CUSTOMER
+INSERT INTO CUSTOMER (Customer_id, Cust_Name, City, Grade, Salesman_id) VALUES
+(1, 'Alice Brown', 'Bangalore', 5, 1),
+(2, 'Bob White', 'Mumbai', 4, 2);
+
+-- Insert Data into ORDERS
+INSERT INTO ORDERS (Ord_No, Purchase_Amt, Ord_Date, Customer_id, Salesman_id) VALUES
+(1, 250.75, '2022-01-10', 1, 1),
+(2, 400.50, '2022-01-12', 2, 2);
+
+Section 3: CollegeDatabase Schema
+3.2A Database Creation and Table Setup
+
+-- Create Database
+CREATE DATABASE CollegeDatabase;
+
+-- Switch to the CollegeDatabase
+USE CollegeDatabase;
+
+-- Table Creation
+CREATE TABLE STUDENT (
+  USN VARCHAR(10) PRIMARY KEY,
+  SName VARCHAR(50),
+  Address VARCHAR(100),
+  Phone VARCHAR(15),
+  Gender CHAR(1)
+);
+
+CREATE TABLE SEMSEC (
+  SSID INT PRIMARY KEY,
+  Sem INT,
+  Sec CHAR(1)
+);
+
+CREATE TABLE CLASS (
+  USN VARCHAR(10),
+  SSID INT,
+  FOREIGN KEY (USN) REFERENCES STUDENT(USN),
+  FOREIGN KEY (SSID) REFERENCES SEMSEC(SSID)
+);
+
+CREATE TABLE SUBJECT (
+  Subcode VARCHAR(10) PRIMARY KEY,
+  Title VARCHAR(50),
+  Sem INT,
+  Credits INT
+);
+
+CREATE TABLE IAMARKS (
+  USN VARCHAR(10),
+  Subcode VARCHAR(10),
+  SSID INT,
+  Test1 INT,
+  Test2 INT,
+  Test3 INT,
+  FinalIA INT,
+  FOREIGN KEY (USN) REFERENCES STUDENT(USN),
+  FOREIGN KEY (Subcode) REFERENCES SUBJECT(Subcode),
+  FOREIGN KEY (SSID) REFERENCES SEMSEC(SSID)
+);
+
+Dummy Data Insertion
+
+-- Insert Data into STUDENT
+INSERT INTO STUDENT (USN, SName, Address, Phone, Gender) VALUES
+('1BI15CS101', 'Rahul Sharma', '123 College Rd', '1234567890', 'M'),
+('1BI15CS102', 'Anita Kumari', '456 College Rd', '0987654321', 'F');
+
+-- Insert Data into SEMSEC
+INSERT INTO SEMSEC (SSID, Sem, Sec) VALUES
+(1, 4, 'C'),
+(2, 8, 'A');
+
+-- Insert Data into CLASS
+INSERT INTO CLASS (USN, SSID) VALUES
+('1BI15CS101', 1),
+('1BI15CS102', 1);
+
+-- Insert Data into SUBJECT
+INSERT INTO SUBJECT (Subcode, Title, Sem, Credits) VALUES
+('CS101', 'Data Structures', 4, 4),
+('CS102', 'Database Systems', 4, 3);
+
+-- Insert Data into IAMARKS
+INSERT INTO IAMARKS (USN, Subcode, SSID, Test1, Test2, Test3, FinalIA) VALUES
+('1BI15CS101', 'CS101', 1, 15, 16, 18, 17),
+('1BI15CS102', 'CS102', 1, 14, 12, 16, 15);
+
+Section 4: CompanyDatabase Schema
+4.3A Database Creation and Table Setup
+
+-- Create Database
+CREATE DATABASE CompanyDatabase;
+
+-- Switch to the CompanyDatabase
+USE CompanyDatabase;
+
+-- Table Creation
+CREATE TABLE EMPLOYEE (
+  SSN INT PRIMARY KEY,
+  Name VARCHAR(50),
+  Address VARCHAR(100),
+  Sex CHAR(1),
+  Salary DECIMAL(10, 2),
+  SuperSSN INT,
+  DNo INT
+);
+
+CREATE TABLE DEPARTMENT (
+  DNo INT PRIMARY KEY,
+  DName VARCHAR(50),
+  MgrSSN INT,
+  MgrStartDate DATE,
+  FOREIGN KEY (MgrSSN) REFERENCES EMPLOYEE(SSN)
+);
+
+CREATE TABLE DLOCATION (
+  DNo INT,
+  DLoc VARCHAR(100),
+  FOREIGN KEY (DNo) REFERENCES DEPARTMENT(DNo)
+);
+
+CREATE TABLE PROJECT (
+  PNo INT PRIMARY KEY,
+  PName VARCHAR(50),
+  PLocation VARCHAR(50),
+  DNo INT,
+  FOREIGN KEY (DNo) REFERENCES DEPARTMENT(DNo)
+);
+
+CREATE TABLE WORKS_ON (
+  SSN INT,
+  PNo INT,
+  Hours INT,
+  FOREIGN KEY (SSN) REFERENCES EMPLOYEE(SSN),
+  FOREIGN KEY (PNo) REFERENCES PROJECT(PNo)
+);
+
+Dummy Data Insertion
+
+-- Insert Data into EMPLOYEE
+INSERT INTO EMPLOYEE (SSN, Name, Address, Sex, Salary, SuperSSN, DNo) VALUES
+(1, 'Alice Johnson', '123 Work St', 'F', 60000, NULL, 1),
+(2, 'Bob Smith', '456 Work St', 'M', 75000, 1, 2);
+
+-- Insert Data into DEPARTMENT
+INSERT INTO DEPARTMENT (DNo, DName, MgrSSN, MgrStartDate) VALUES
+(1, 'HR', 1, '2021-01-01'),
+(2, 'IT', 2, '2022-01-01');
+
+-- Insert Data into DLOCATION
+INSERT INTO DLOCATION (DNo, DLoc) VALUES
+(1, 'Building A'),
+(2, 'Building B');
+
+-- Insert Data into PROJECT
+INSERT INTO PROJECT (PNo, PName, PLocation, DNo) VALUES
+(1, 'IoT', 'Research Lab', 2),
+(2, 'Accounts', 'Finance Dept', 1);
+
+-- Insert Data into WORKS_ON
+INSERT INTO WORKS_ON (SSN, PNo, Hours) VALUES
+(1, 1, 20),
+(2, 2, 35);
+
+These queries will set up the necessary tables and insert example data for each schema so you can test the SQL queries and PL/SQL procedures provided earlier. Let me know if you need further assistance!
+You said:
+how do you determine which keys are primary and which keys are foreign? explain with refernce to the tlibrary database
+ChatGPT said:
+
+Determining primary keys and foreign keys in a database schema depends on understanding the relationships between tables and the nature of the data each table holds. Let’s look at this concept in the context of the LibraryDatabase schema.
+1. Primary Keys
+
+A primary key is a column (or set of columns) in a table that uniquely identifies each row within that table. Every table should have a primary key to ensure each row is unique and accessible.
+Identifying Primary Keys in LibraryDatabase
+
+For each table in the LibraryDatabase, we look for attributes that uniquely identify each record:
+
+    BOOK: The Book_id uniquely identifies each book, so Book_id is the primary key of the BOOK table.
+    BOOK_AUTHORS: This table records the relationship between a book and its authors. Since a book can have multiple authors, Book_id and Author_Name together make each record unique. Thus, the combination of Book_id and Author_Name serves as a composite primary key.
+    PUBLISHER: The Name uniquely identifies each publisher, so Name is the primary key for the PUBLISHER table.
+    BOOK_COPIES: This table records the number of copies of each book in different library branches. Since multiple branches can have copies of the same book, both Book_id and Branch_id together uniquely identify each record, so they form a composite primary key.
+    BOOK_LENDING: This table tracks when books are borrowed. Since each lending instance is unique by the combination of Book_id, Branch_id, and Card_No (borrower ID), these columns together serve as a composite primary key.
+    LIBRARY_BRANCH: The Branch_id uniquely identifies each library branch, so it serves as the primary key for the LIBRARY_BRANCH table.
+
+2. Foreign Keys
+
+A foreign key is a column or set of columns in one table that refers to the primary key of another table. Foreign keys establish relationships between tables by linking data from one table to another.
+Identifying Foreign Keys in LibraryDatabase
+
+In the LibraryDatabase schema, foreign keys are used to represent relationships between entities:
+
+    BOOK_AUTHORS:
+        Book_id is a foreign key that references Book_id in the BOOK table. This connection allows us to link each author to the book(s) they have written.
+
+    BOOK_COPIES:
+        Book_id is a foreign key that references Book_id in the BOOK table, linking book copies back to the main book details.
+        Branch_id is a foreign key that references Branch_id in the LIBRARY_BRANCH table, associating each book copy with a specific library branch.
+
+    BOOK_LENDING:
+        Book_id is a foreign key that references Book_id in the BOOK table, indicating which book is being borrowed.
+        Branch_id is a foreign key that references Branch_id in the LIBRARY_BRANCH table, specifying the branch from which the book is borrowed.
+
+These foreign keys establish the relationships necessary for managing data dependencies within the LibraryDatabase. For example, the BOOK_COPIES table’s foreign keys link back to both the book itself (BOOK) and the library branch (LIBRARY_BRANCH), allowing the database to track how many copies of each book are available at each branch.
+Summary of Primary and Foreign Keys in LibraryDatabase
+Table	Primary Key(s)	Foreign Key(s) (References)
+BOOK	Book_id	None
+BOOK_AUTHORS	Book_id, Author_Name	Book_id (references BOOK.Book_id)
+PUBLISHER	Name	None
+BOOK_COPIES	Book_id, Branch_id	Book_id (references BOOK.Book_id),
+Branch_id (references LIBRARY_BRANCH.Branch_id)
+BOOK_LENDING	Book_id, Branch_id, Card_No	Book_id (references BOOK.Book_id),
+Branch_id (references LIBRARY_BRANCH.Branch_id)
+LIBRARY_BRANCH	Branch_id	None
+Key Points for Determining Primary and Foreign Keys
+
+    Primary Key:
+        Identify columns that uniquely define each record in a table.
+        Composite primary keys are used when a combination of columns is required to ensure uniqueness (e.g., Book_id and Branch_id in BOOK_COPIES).
+
+    Foreign Key:
+        Look at relationships between tables.
+        Use foreign keys to link a column in one table to the primary key of another, maintaining referential integrity between tables.
+
+This understanding of primary and foreign keys allows us to structure relational databases that can efficiently store and relate data across tables.
+You said:
+ Consider the schema for CollegeDatabase:
+STUDENT (USN, SName, Address, Phone,Gender)
+SEMSEC (SSID, Sem, Sec)
+CLASS (USN, SSID)
+SUBJECT (Subcode, Title, Sem, Credits)
+IAMARKS (USN, Subcode, SSID, Test1, Test2, Test3,FinalIA)
+Write SQL queries to
+1. List all the student details studying in fourth semester ‘C’section.
+2. Compute the total number of male and female students in each semester and in each section.
+3. Create a view of Test1 marks of student USN ‘1BI15CS101’ in allsubjects.
+4. Calculate the FinalIA (average of best two test marks) and update the corresponding table for
+allstudents.
+5. Categorize students based on the followingcriterion: If FinalIA = 17 to 20 then CAT =‘Outstanding’ ,
+If FinalIA = 12 to 16 then CAT =‘Average’ If FinalIA< 12 then CAT =‘Weak’. Give these details only for
+8th semester A, B, and C section students
+ChatGPT said:
+
+Let's go through each query for the CollegeDatabase schema, including explanations for the SQL commands and logic used.
+CollegeDatabase Schema Recap
+
+Tables:
+
+    STUDENT: Contains details of each student.
+        Columns: USN, SName, Address, Phone, Gender
+    SEMSEC: Represents each semester-section combination.
+        Columns: SSID, Sem, Sec
+    CLASS: Links students to their semester-section.
+        Columns: USN, SSID
+    SUBJECT: Contains information on subjects.
+        Columns: Subcode, Title, Sem, Credits
+    IAMARKS: Stores internal assessment marks for students.
+        Columns: USN, Subcode, SSID, Test1, Test2, Test3, FinalIA
+
+Query 1: List all student details studying in fourth semester ‘C’ section
+
+To find students in the fourth semester 'C' section, we’ll join the STUDENT, CLASS, and SEMSEC tables.
+
+SELECT s.USN, s.SName, s.Address, s.Phone, s.Gender
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+WHERE ss.Sem = 4 AND ss.Sec = 'C';
+
+Explanation:
+
+    JOIN operations connect STUDENT to CLASS on USN and CLASS to SEMSEC on SSID.
+    The WHERE clause filters records to only show those in the fourth semester (ss.Sem = 4) and section 'C' (ss.Sec = 'C').
+
+Query 2: Compute the total number of male and female students in each semester and in each section
+
+This query involves grouping by Semester and Section, and counting the students based on their gender.
+
+SELECT ss.Sem, ss.Sec, s.Gender, COUNT(s.USN) AS Total_Students
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+GROUP BY ss.Sem, ss.Sec, s.Gender;
+
+Explanation:
+
+    GROUP BY groups the results by Semester, Section, and Gender.
+    COUNT(s.USN) counts the number of students in each group.
+    This query provides a count of male and female students for each semester-section combination.
+
+Query 3: Create a view of Test1 marks of student USN ‘1BI15CS101’ in all subjects
+
+We’ll create a view to show Test1 marks for the specified student across all subjects.
+
+CREATE VIEW Student_Test1_Marks AS
+SELECT USN, Subcode, Test1
+FROM IAMARKS
+WHERE USN = '1BI15CS101';
+
+Explanation:
+
+    CREATE VIEW defines a virtual table (Student_Test1_Marks) that shows Test1 marks for the student with USN = '1BI15CS101'.
+    This view can be queried later like a regular table.
+
+Query 4: Calculate the FinalIA (average of the best two test marks) and update the corresponding table for all students
+
+To calculate FinalIA as the average of the best two marks from Test1, Test2, and Test3, we’ll use SQL functions and update the IAMARKS table.
+
+UPDATE IAMARKS
+SET FinalIA = (
+  SELECT ROUND((GREATEST(Test1, Test2, Test3) + 
+               LEAST(GREATEST(Test1, Test2), GREATEST(Test2, Test3), GREATEST(Test1, Test3))) / 2, 2)
+  FROM IAMARKS AS sub
+  WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode
+);
+
+Explanation:
+
+    GREATEST(Test1, Test2, Test3) finds the highest test mark.
+    The inner LEAST and GREATEST functions identify the second-highest mark.
+    These two values are averaged and rounded to two decimal places.
+    UPDATE then sets FinalIA to this calculated average for each student and subject.
+
+Query 5: Categorize students based on FinalIA for 8th semester A, B, and C section students
+
+This query categorizes students in the 8th semester, sections A, B, and C based on their FinalIA scores.
+
+SELECT s.USN, s.SName, ss.Sem, ss.Sec,
+       CASE
+         WHEN ia.FinalIA BETWEEN 17 AND 20 THEN 'Outstanding'
+         WHEN ia.FinalIA BETWEEN 12 AND 16 THEN 'Average'
+         WHEN ia.FinalIA < 12 THEN 'Weak'
+         ELSE 'Uncategorized'
+       END AS CAT
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+JOIN IAMARKS ia ON s.USN = ia.USN AND ss.SSID = ia.SSID
+WHERE ss.Sem = 8 AND ss.Sec IN ('A', 'B', 'C');
+
+Explanation:
+
+    The CASE statement categorizes FinalIA scores:
+        Outstanding for scores between 17 and 20.
+        Average for scores between 12 and 16.
+        Weak for scores less than 12.
+    The WHERE clause limits the query to students in the 8th semester in sections A, B, or C.
+
+Summary of SQL Concepts Used
+
+    JOINs: Used to connect related tables based on common fields, such as USN and SSID.
+    WHERE Clause: Filters results based on conditions, e.g., semester and section.
+    GROUP BY and COUNT: Groups data and counts records per group, used to get student totals by gender.
+    Views: Virtual tables created with CREATE VIEW, useful for storing specific query results.
+    UPDATE with Subquery: Allows updating records based on complex calculations, as seen in the FinalIA calculation.
+    CASE Statement: Provides conditional logic to categorize students based on FinalIA.
+
+These SQL queries and commands should cover the requirements for the CollegeDatabase schema. Let me know if you need further clarification on any of the steps!
+You said:
+UPDATE IAMARKS
+SET FinalIA = (
+  SELECT ROUND((GREATEST(Test1, Test2, Test3) + 
+               LEAST(GREATEST(Test1, Test2), GREATEST(Test2, Test3), GREATEST(Test1, Test3))) / 2, 2)
+  FROM IAMARKS AS sub
+  WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode
+);
+
+i didnt understand tthe rounf, least, greates aprt..expalin with example
+ChatGPT said:
+
+Certainly! Let’s break down this query, focusing on how ROUND, GREATEST, and LEAST are used to calculate the FinalIA as the average of the best two test scores (Test1, Test2, Test3). I’ll explain each function with examples to clarify how it works.
+Query Recap
+
+The goal is to calculate FinalIA by taking the average of the highest two test scores (from Test1, Test2, and Test3) for each student and each subject.
+Explanation of Functions
+
+    GREATEST: This function returns the highest value among the specified arguments.
+        Example: GREATEST(10, 15, 20) returns 20.
+
+    LEAST: This function returns the lowest value among the specified arguments.
+        Example: LEAST(10, 15, 20) returns 10.
+
+    ROUND: This function rounds a number to a specified number of decimal places.
+        Example: ROUND(15.678, 2) returns 15.68.
+
+Breakdown of the Query
+
+The query calculates FinalIA as the average of the two highest test scores for each student and each subject. Here’s how it works, step-by-step:
+
+UPDATE IAMARKS
+SET FinalIA = (
+  SELECT ROUND(
+      (GREATEST(Test1, Test2, Test3) + 
+       LEAST(GREATEST(Test1, Test2), GREATEST(Test2, Test3), GREATEST(Test1, Test3))) / 2, 
+      2)
+  FROM IAMARKS AS sub
+  WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode
+);
+
+Step-by-Step Example with Sample Data
+
+Suppose we have the following scores for a student:
+
+    Test1 = 12
+    Test2 = 18
+    Test3 = 15
+
+Step 1: Find the Highest Score with GREATEST
+
+GREATEST(Test1, Test2, Test3)
+
+    This part returns the highest score among Test1, Test2, and Test3.
+    With our example values, GREATEST(12, 18, 15) returns 18.
+
+Step 2: Find the Second-Highest Score Using a Combination of GREATEST and LEAST
+
+LEAST(GREATEST(Test1, Test2), GREATEST(Test2, Test3), GREATEST(Test1, Test3))
+
+    This part finds the second-highest score. Here’s how it works:
+        GREATEST(Test1, Test2): Finds the highest score between Test1 and Test2.
+            With our values: GREATEST(12, 18) = 18
+        GREATEST(Test2, Test3): Finds the highest score between Test2 and Test3.
+            With our values: GREATEST(18, 15) = 18
+        GREATEST(Test1, Test3): Finds the highest score between Test1 and Test3.
+            With our values: GREATEST(12, 15) = 15
+        We now have three results from these GREATEST functions: 18, 18, and 15.
+
+    Finding the Second-Highest (or Next-Highest):
+        LEAST(18, 18, 15) returns 15.
+        So, the second-highest score is 15.
+
+Step 3: Calculate the Average of the Two Highest Scores
+
+Now we have:
+
+    Highest score = 18
+    Second-highest score = 15
+
+The query then calculates the average of these two values:
+
+(18 + 15) / 2 = 16.5
+
+Step 4: Round the Result to Two Decimal Places with ROUND
+
+The query rounds the result to two decimal places:
+
+ROUND(16.5, 2) = 16.5
+
+Final Result
+
+For this student, the FinalIA would be updated to 16.5 based on the two highest test scores, 18 and 15.
+Summary of Logic
+
+    GREATEST(Test1, Test2, Test3) gives the highest score.
+    LEAST(GREATEST(Test1, Test2), GREATEST(Test2, Test3), GREATEST(Test1, Test3)) finds the second-highest score by taking the lowest of the three maximum values from each test pair.
+    ROUND then finalizes the result by ensuring it’s rounded to two decimal places for consistency.
+
+This approach dynamically calculates the average of the best two test scores for each student and subject, regardless of their specific scores.
+You said:
+FROM IAMARKS AS sub
+  WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode
+
+explain this part too
+ChatGPT said:
+
+This part of the query is used to correlate the IAMARKS table in the main UPDATE statement with a subquery that calculates the FinalIA value. Here's a breakdown of what each part is doing:
+Context of the Query
+
+The full query is an UPDATE statement that updates the FinalIA column in the IAMARKS table based on a calculation of the highest two test scores. Here’s the relevant part of the query:
+
+UPDATE IAMARKS
+SET FinalIA = (
+  SELECT ROUND(
+      (GREATEST(Test1, Test2, Test3) + 
+       LEAST(GREATEST(Test1, Test2), GREATEST(Test2, Test3), GREATEST(Test1, Test3))) / 2, 
+      2)
+  FROM IAMARKS AS sub
+  WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode
+);
+
+Explanation of FROM IAMARKS AS sub
+
+    FROM IAMARKS AS sub:
+        Here, we are creating an alias (sub) for the IAMARKS table within the subquery.
+        This alias allows us to refer to the IAMARKS table inside the subquery as sub.
+        Essentially, we are querying the same IAMARKS table twice: once in the main UPDATE query and once in the subquery.
+
+Explanation of WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode
+
+    WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode:
+        This part is the correlation condition between the main query and the subquery.
+        IAMARKS.USN and IAMARKS.Subcode refer to the current row in the main UPDATE statement.
+        sub.USN and sub.Subcode refer to the row in the subquery, using the alias sub.
+        The WHERE clause ensures that the subquery operates on the same student (USN) and subject (Subcode) as the row being updated in the main query.
+
+Why the Correlation Condition is Necessary
+
+    Since UPDATE operates on each row individually, we need to ensure that the calculation of FinalIA for each row in IAMARKS uses the correct Test1, Test2, and Test3 values from that specific row.
+    The WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode condition makes sure that the subquery calculates the FinalIA value based on the same USN and Subcode as the row currently being updated.
+
+Example to Illustrate
+
+Suppose the IAMARKS table contains the following data:
+USN	Subcode	Test1	Test2	Test3	FinalIA
+1BI15CS101	CS101	12	18	15	NULL
+1BI15CS101	CS102	10	16	14	NULL
+1BI15CS102	CS101	17	15	20	NULL
+
+    When the UPDATE query reaches the first row (USN = '1BI15CS101' and Subcode = 'CS101'), the subquery will:
+        Look for Test1, Test2, and Test3 values only for that specific USN and Subcode (1BI15CS101, CS101).
+        Calculate FinalIA for this row as (18 + 15) / 2 = 16.5.
+
+The WHERE sub.USN = IAMARKS.USN AND sub.Subcode = IAMARKS.Subcode clause ensures that the subquery operates on the correct values for each row being updated, maintaining accuracy for every student and subject.
+You said:
+explain this query too line by line
+SELECT s.USN, s.SName, ss.Sem, ss.Sec,
+       CASE
+         WHEN ia.FinalIA BETWEEN 17 AND 20 THEN 'Outstanding'
+         WHEN ia.FinalIA BETWEEN 12 AND 16 THEN 'Average'
+         WHEN ia.FinalIA < 12 THEN 'Weak'
+         ELSE 'Uncategorized'
+       END AS CAT
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+JOIN IAMARKS ia ON s.USN = ia.USN AND ss.SSID = ia.SSID
+WHERE ss.Sem = 8 AND ss.Sec IN ('A', 'B', 'C');
+ChatGPT said:
+
+Let's break down this SQL query line by line. The goal of this query is to categorize students based on their FinalIA scores for students in the 8th semester in sections A, B, or C.
+Query
+
+SELECT s.USN, s.SName, ss.Sem, ss.Sec,
+       CASE
+         WHEN ia.FinalIA BETWEEN 17 AND 20 THEN 'Outstanding'
+         WHEN ia.FinalIA BETWEEN 12 AND 16 THEN 'Average'
+         WHEN ia.FinalIA < 12 THEN 'Weak'
+         ELSE 'Uncategorized'
+       END AS CAT
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+JOIN IAMARKS ia ON s.USN = ia.USN AND ss.SSID = ia.SSID
+WHERE ss.Sem = 8 AND ss.Sec IN ('A', 'B', 'C');
+
+Explanation of Each Line
+SELECT Clause
+
+SELECT s.USN, s.SName, ss.Sem, ss.Sec,
+
+    SELECT specifies the columns to display in the query results.
+    s.USN: Retrieves the USN (unique student number) from the STUDENT table, alias s.
+    s.SName: Retrieves the student's name from the STUDENT table.
+    ss.Sem: Retrieves the semester from the SEMSEC table, alias ss.
+    ss.Sec: Retrieves the section from the SEMSEC table.
+
+These columns give basic information about each student (ID, name, semester, and section).
+CASE Statement (Categorizing FinalIA)
+
+       CASE
+         WHEN ia.FinalIA BETWEEN 17 AND 20 THEN 'Outstanding'
+         WHEN ia.FinalIA BETWEEN 12 AND 16 THEN 'Average'
+         WHEN ia.FinalIA < 12 THEN 'Weak'
+         ELSE 'Uncategorized'
+       END AS CAT
+
+    The CASE statement allows conditional logic within SQL.
+    WHEN ia.FinalIA BETWEEN 17 AND 20 THEN 'Outstanding': If FinalIA is between 17 and 20 (inclusive), categorize the student as 'Outstanding'.
+    WHEN ia.FinalIA BETWEEN 12 AND 16 THEN 'Average': If FinalIA is between 12 and 16, categorize as 'Average'.
+    WHEN ia.FinalIA < 12 THEN 'Weak': If FinalIA is below 12, categorize as 'Weak'.
+    ELSE 'Uncategorized': If FinalIA does not fall into any of the above categories (although this should be rare based on typical score ranges), categorize as 'Uncategorized'.
+    END AS CAT: Assigns the label of the result of the CASE statement to a column alias CAT in the output.
+
+The CASE statement adds a new column, CAT, to the results that categorizes each student’s performance based on their FinalIA score.
+FROM and JOIN Clauses (Connecting the Tables)
+
+FROM STUDENT s
+JOIN CLASS c ON s.USN = c.USN
+JOIN SEMSEC ss ON c.SSID = ss.SSID
+JOIN IAMARKS ia ON s.USN = ia.USN AND ss.SSID = ia.SSID
+
+    FROM STUDENT s: Specifies the STUDENT table as the primary table to select data from and gives it an alias s.
+    JOIN CLASS c ON s.USN = c.USN:
+        JOIN connects the STUDENT table to the CLASS table on the common column USN.
+        This association allows us to find which semester-section combination each student is assigned to.
+    JOIN SEMSEC ss ON c.SSID = ss.SSID:
+        Joins CLASS with SEMSEC on the SSID column.
+        This link allows us to retrieve details about each student’s semester and section (e.g., 8th semester, section 'A').
+    JOIN IAMARKS ia ON s.USN = ia.USN AND ss.SSID = ia.SSID:
+        Joins the STUDENT table (through alias s) with IAMARKS on USN, which identifies the student in both tables.
+        Additionally, ss.SSID = ia.SSID ensures that we only retrieve marks that are relevant to the specific semester-section combination of each student.
+
+These joins allow the query to gather data from multiple tables (STUDENT, CLASS, SEMSEC, and IAMARKS) based on relationships between these tables.
+WHERE Clause (Filtering by Semester and Section)
+
+WHERE ss.Sem = 8 AND ss.Sec IN ('A', 'B', 'C');
+
+    WHERE is used to filter the results.
+    ss.Sem = 8: Filters the results to include only students in the 8th semester.
+    ss.Sec IN ('A', 'B', 'C'): Further restricts the results to students in sections A, B, or C.
+
+This condition ensures that only students in the 8th semester and in sections A, B, or C are included in the output.
+Summary of Output
+
+This query will output the following columns for each student in the 8th semester, sections A, B, or C:
+
+    USN: Student's unique identification number.
+    SName: Student’s name.
+    Sem: The semester, which is 8 for all results due to the WHERE clause.
+    Sec: The section (A, B, or C).
+    CAT: A calculated category (Outstanding, Average, Weak, or Uncategorized) based on the FinalIA score.
+
+Example Output
+
+For sample data, the output might look like this:
+USN	SName	Sem	Sec	CAT
+1BI15CS101	Rahul Sharma	8	A	Outstanding
+1BI15CS102	Priya Verma	8	B	Average
+1BI15CS103	Arun Kumar	8	C	Weak
+
+This output lists each qualifying student's ID, name, semester, section, and performance category based on their FinalIA score.
+You said:
+Write a trigger to print a statement “new student is inserted” when new student is inserted into the
+student table.
+ChatGPT said:
+
+To create a trigger that prints a statement “new student is inserted” whenever a new student is added to the STUDENT table, we can use the AFTER INSERT trigger in SQL. This trigger will execute automatically after a new record is inserted into the STUDENT table.
+
+Here's the code to create the trigger:
+
+CREATE OR REPLACE TRIGGER new_student_inserted
+AFTER INSERT ON STUDENT
+FOR EACH ROW
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('New student is inserted');
+END;
+
+Explanation of the Trigger
+
+    CREATE OR REPLACE TRIGGER new_student_inserted:
+        CREATE OR REPLACE TRIGGER is used to create a new trigger or replace an existing one with the same name.
+        new_student_inserted is the name of the trigger.
+
+    AFTER INSERT ON STUDENT:
+        AFTER INSERT specifies that this trigger should fire right after an INSERT operation on the STUDENT table.
+
+    FOR EACH ROW:
+        FOR EACH ROW indicates that this trigger will execute once for each row that is inserted into the STUDENT table.
+
+    BEGIN ... END;:
+        This block contains the actions that the trigger will perform.
+        DBMS_OUTPUT.PUT_LINE('New student is inserted'); is a PL/SQL command that outputs the message “New student is inserted” to the console.
+
+Notes
+
+    DBMS_OUTPUT.PUT_LINE is commonly used in Oracle databases to display output. In other SQL environments, you may need to adapt this depending on what’s supported for output (e.g., logging or notifications).
+    Ensure that output display (like DBMS_OUTPUT) is enabled in your SQL environment to see the message.
+
+This trigger will display the message every time a new row is added to the STUDENT table, helping confirm the addition of new student records.
+You said:
+Order Management:**
+- (a) Create a table named "Order_info" with fields: order_id (primary key), customer_id,
+product_name, quantity, and order_date.
+- (b) Insert values into the "Order_info" table, accepting input for each field
+- (c) Retrieve orders placed by a specific customer (choose a customer_id) with details of the
+product and quantity
+- (d) Update the quantity of a specific product in the "Order_info" table for a given order_id.
+-(e) Calculate the total quantity of a specific product sold across all orders.
+2. Design a trigger that automatically updates the "LastModified" column with the current
+timestamp whenever a row is modified in a specific table
+
+Provide answers 
+All provide the complete pl sql code for the last question with the concept and syntax i need toknow about pl sql
+ChatGPT said:
+
+Let's go through each of the requirements for the Order Management system and create the necessary SQL statements, including explanations for each step.
+1. Creating the Order_info Table
+(a) Create Table Order_info
+
+CREATE TABLE Order_info (
+  order_id INT PRIMARY KEY,
+  customer_id INT,
+  product_name VARCHAR(100),
+  quantity INT,
+  order_date DATE
+);
+
+Explanation:
+
+    order_id: The primary key for each order, ensuring each record is unique.
+    customer_id: Identifies the customer placing the order.
+    product_name: Stores the name of the product ordered.
+    quantity: The quantity of the product ordered.
+    order_date: The date when the order was placed.
+
+2. Inserting Data into Order_info
+(b) Insert Values into Order_info
+
+To insert values, we can use the INSERT INTO statement. Here’s an example where values are being inserted for each field:
+
+INSERT INTO Order_info (order_id, customer_id, product_name, quantity, order_date)
+VALUES (1, 101, 'Laptop', 2, '2023-11-13');
+
+INSERT INTO Order_info (order_id, customer_id, product_name, quantity, order_date)
+VALUES (2, 102, 'Smartphone', 3, '2023-11-14');
+
+Explanation:
+
+    INSERT INTO: Specifies the table (Order_info) and the columns to which we are adding values.
+    VALUES: Lists the actual values being inserted into each column in the specified order.
+
+3. Retrieving Orders by Customer ID
+(c) Retrieve Orders for a Specific Customer
+
+To retrieve orders for a specific customer_id, we can use a SELECT query with a WHERE clause. Let’s assume we want to retrieve orders for customer_id = 101.
+
+SELECT order_id, product_name, quantity
+FROM Order_info
+WHERE customer_id = 101;
+
+Explanation:
+
+    SELECT: Specifies the columns we want to retrieve (order_id, product_name, and quantity).
+    WHERE customer_id = 101: Filters the results to show only orders placed by the customer with customer_id = 101.
+
+4. Updating the Quantity for a Specific Order
+(d) Update Quantity for a Given Order ID
+
+To update the quantity for a specific order_id, use the UPDATE statement. Let’s say we want to update the quantity to 5 for order_id = 1.
+
+UPDATE Order_info
+SET quantity = 5
+WHERE order_id = 1;
+
+Explanation:
+
+    UPDATE Order_info: Specifies the table we’re updating.
+    SET quantity = 5: Sets the quantity column to 5 for the specified order.
+    WHERE order_id = 1: Ensures only the row with order_id = 1 is updated.
+
+5. Calculating Total Quantity Sold for a Product
+(e) Calculate the Total Quantity of a Specific Product
+
+To calculate the total quantity sold for a specific product, we can use the SUM function. For example, to get the total quantity sold for the product "Laptop":
+
+SELECT SUM(quantity) AS total_quantity
+FROM Order_info
+WHERE product_name = 'Laptop';
+
+Explanation:
+
+    SUM(quantity): Adds up all values in the quantity column for rows that match the condition.
+    WHERE product_name = 'Laptop': Filters the results to include only orders for the product "Laptop".
+
+6. Creating a Trigger to Update LastModified Timestamp
+
+We need a trigger that automatically updates a column named LastModified with the current timestamp whenever a row is modified. Here’s how we can set this up.
+Step 1: Alter the Table to Add LastModified Column
+
+First, we add a LastModified column to the Order_info table, which will store the timestamp of the last modification.
+
+ALTER TABLE Order_info
+ADD LastModified TIMESTAMP;
+
+Step 2: Create the Trigger
+
+We’ll create a trigger that fires BEFORE UPDATE on the Order_info table and updates the LastModified column with the current timestamp.
+
+CREATE OR REPLACE TRIGGER update_last_modified
+BEFORE UPDATE ON Order_info
+FOR EACH ROW
+BEGIN
+  :NEW.LastModified := CURRENT_TIMESTAMP;
+END;
+
+Explanation:
+
+    CREATE OR REPLACE TRIGGER update_last_modified:
+        CREATE OR REPLACE allows us to create a new trigger or replace an existing one with the same name (update_last_modified).
+    BEFORE UPDATE ON Order_info:
+        Specifies that this trigger should run before an UPDATE operation on the Order_info table.
+    FOR EACH ROW:
+        Ensures the trigger applies to each individual row that is updated.
+    BEGIN ... END:
+        This block contains the actions to be executed by the trigger.
+        :NEW.LastModified := CURRENT_TIMESTAMP; sets the LastModified column in the new row (being updated) to the current timestamp.
+        :NEW refers to the values of the columns after the UPDATE, while :OLD (not used here) would refer to the values before the UPDATE.
+
+PL/SQL Concepts and Syntax Used
+
+In the context of PL/SQL, here are some concepts that apply, particularly for the trigger:
+
+    Triggers: A trigger is a stored procedure that automatically executes in response to certain events on a table, such as INSERT, UPDATE, or DELETE.
+        BEFORE and AFTER: These keywords specify when the trigger should fire (either before or after the event).
+        FOR EACH ROW: Applies the trigger logic to each row affected by the SQL statement.
+
+    Pseudo-Records:
+        :NEW and :OLD are pseudo-records in triggers.
+        :NEW holds the new values that will be applied to the row in an INSERT or UPDATE.
+        :OLD holds the original values in the row before an UPDATE or DELETE.
+
+    TIMESTAMP: The CURRENT_TIMESTAMP function returns the current date and time, which is stored in the LastModified column whenever a row is updated.
+
+This PL/SQL trigger helps maintain data consistency by automatically tracking the last modification time for each order in the Order_info table.
+You said:
+where is the declare begin section in pl sql
+ChatGPT said:
+
+In PL/SQL, the DECLARE and BEGIN sections are used in blocks of code that typically include variable declarations, procedural logic, and executable statements. Let’s look at the structure of a PL/SQL block, which consists of four main parts:
+
+    DECLARE Section: Used to declare variables, cursors, exceptions, or constants.
+    BEGIN Section: Contains the main executable code.
+    EXCEPTION Section (optional): Handles any exceptions or errors that might occur during execution.
+    END: Marks the end of the PL/SQL block.
+
+Structure of a PL/SQL Block
+
+Here is the basic syntax for a PL/SQL block:
+
+DECLARE
+  -- Variable declarations go here
+  variable_name data_type := initial_value;
+
+BEGIN
+  -- Main executable code goes here
+  -- Example: assigning values, performing calculations, calling functions, etc.
+
+  DBMS_OUTPUT.PUT_LINE('This is a PL/SQL block');
+
+EXCEPTION
+  -- Error handling code goes here
+  WHEN others THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred');
+END;
+
+Explanation of Each Part
+
+    DECLARE:
+        This section is optional, but if present, it must be at the beginning.
+        You declare any variables, cursors, constants, or exceptions here.
+        Example: variable_name data_type := initial_value;.
+
+    BEGIN:
+        This section contains the executable statements for the block.
+        It is required in every PL/SQL block.
+        In this section, you can include assignments, function calls, conditional logic, loops, and other procedural code.
+
+    EXCEPTION (optional):
+        This section handles any exceptions that might occur during the execution of the BEGIN section.
+        You can define custom actions to handle errors here, like logging the error or displaying a message.
+
+    END:
+        Marks the end of the PL/SQL block.
+        Required in every PL/SQL block.
+
+Example: A Complete PL/SQL Block with DECLARE, BEGIN, and EXCEPTION
+
+Let’s create a PL/SQL block to demonstrate the DECLARE and BEGIN sections.
+
+DECLARE
+  -- Variable declarations
+  v_order_id NUMBER := 1;
+  v_quantity NUMBER := 0;
+
+BEGIN
+  -- Main executable code
+  SELECT quantity INTO v_quantity
+  FROM Order_info
+  WHERE order_id = v_order_id;
+
+  DBMS_OUTPUT.PUT_LINE('Quantity for Order ID ' || v_order_id || ' is ' || v_quantity);
+
+EXCEPTION
+  -- Exception handling
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Order ID ' || v_order_id || ' not found.');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An unexpected error occurred.');
+END;
+
+Explanation of the Example
+
+    DECLARE Section:
+        Here, v_order_id and v_quantity are variables of type NUMBER. v_order_id is initialized to 1, while v_quantity is initialized to 0.
+
+    BEGIN Section:
+        We execute a SELECT statement to retrieve the quantity for a specific order_id from the Order_info table.
+        The quantity is stored in v_quantity, and then a message with the retrieved value is printed using DBMS_OUTPUT.PUT_LINE.
+
+    EXCEPTION Section:
+        The NO_DATA_FOUND exception handles cases where the query does not find a row with the specified order_id.
+        OTHERS handles any other unexpected errors.
+
+In this example, the DECLARE and BEGIN sections work together to retrieve and display the quantity for a given order_id, while the EXCEPTION section gracefully handles any errors that might arise. This complete structure is fundamental in PL/SQL programming for writing modular, maintainable, and error-resistant code.
+You said:
+Order Management:**
+- (a) Create a table named "Order_info" with fields: order_id (primary key), customer_id,
+product_name, quantity, and order_date.
+- (b) Insert values into the "Order_info" table, accepting input for each field
+- (c) Retrieve orders placed by a specific customer (choose a customer_id) with details of the
+product and quantity
+- (d) Update the quantity of a specific product in the "Order_info" table for a given order_id.
+-(e) Calculate the total quantity of a specific product sold across all orders.
+2. Design a trigger that automatically updates the "LastModified" column with the current
+timestamp whenever a row is modified in a specific table
+
+provide the complete pl sql code for last question
+ChatGPT said:
+
+Let's go through each part of the Order Management requirements in order, and then address the final part, which involves creating a trigger to update the "LastModified" column.
+1. Creating the Order_info Table
+(a) Create Table Order_info
+
+We'll start by creating the Order_info table and adding a LastModified column that will be updated automatically by the trigger in the last step.
+
+CREATE TABLE Order_info (
+  order_id INT PRIMARY KEY,
+  customer_id INT,
+  product_name VARCHAR(100),
+  quantity INT,
+  order_date DATE,
+  LastModified TIMESTAMP
+);
+
+2. Insert Values into Order_info
+(b) Insert Values into Order_info
+
+You can insert values into Order_info by accepting input for each field. Here’s an example of inserting sample data.
+
+INSERT INTO Order_info (order_id, customer_id, product_name, quantity, order_date)
+VALUES (1, 101, 'Laptop', 2, TO_DATE('2023-11-13', 'YYYY-MM-DD'));
+
+INSERT INTO Order_info (order_id, customer_id, product_name, quantity, order_date)
+VALUES (2, 102, 'Smartphone', 3, TO_DATE('2023-11-14', 'YYYY-MM-DD'));
+
+3. Retrieve Orders for a Specific Customer
+(c) Retrieve Orders by Customer ID
+
+To retrieve orders for a specific customer_id, use a SELECT query with a WHERE clause. For example, to retrieve orders placed by customer_id = 101:
+
+SELECT order_id, product_name, quantity
+FROM Order_info
+WHERE customer_id = 101;
+
+4. Update Quantity for a Specific Product
+(d) Update Quantity
+
+To update the quantity for a specific product based on order_id, use the UPDATE statement. For example, if you want to change the quantity of the product for order_id = 1 to 5:
+
+UPDATE Order_info
+SET quantity = 5
+WHERE order_id = 1;
+
+5. Calculate Total Quantity Sold for a Specific Product
+(e) Calculate Total Quantity Sold
+
+To calculate the total quantity sold for a specific product, you can use the SUM function with a WHERE clause to filter by product name. For example, for the product "Laptop":
+
+SELECT SUM(quantity) AS total_quantity
+FROM Order_info
+WHERE product_name = 'Laptop';
+
+6. Trigger to Automatically Update LastModified Column
+Complete PL/SQL Code for Trigger
+
+This trigger will automatically set the LastModified column to the current timestamp whenever an UPDATE is performed on any row in the Order_info table.
+
+CREATE OR REPLACE TRIGGER update_last_modified
+BEFORE UPDATE ON Order_info
+FOR EACH ROW
+BEGIN
+  :NEW.LastModified := CURRENT_TIMESTAMP;
+END;
+/
+
+Explanation of the Trigger Code
+
+    CREATE OR REPLACE TRIGGER update_last_modified:
+        Creates a trigger named update_last_modified. Using CREATE OR REPLACE allows you to replace the trigger if it already exists.
+
+    BEFORE UPDATE ON Order_info:
+        Specifies that this trigger should run before any UPDATE operation on the Order_info table.
+
+    FOR EACH ROW:
+        Ensures that the trigger fires individually for each row being updated.
+
+    BEGIN ... END:
+        This block contains the actions the trigger will perform.
+
+    .LastModified := CURRENT_TIMESTAMP;:
+        :NEW is a pseudo-record in PL/SQL triggers that represents the new values of the columns in the row after the UPDATE.
+        This line sets the LastModified column of the updated row to the current timestamp using CURRENT_TIMESTAMP.
+
+Notes on PL/SQL Concepts Used in the Trigger
+
+    Triggers: Triggers in PL/SQL are stored procedures that automatically execute in response to specified events (like INSERT, UPDATE, or DELETE) on a table.
+    Pseudo-Records (:NEW and :OLD):
+        :NEW represents the new value of a column after an UPDATE or INSERT.
+        :OLD represents the old value of a column before an UPDATE or DELETE.
+    CURRENT_TIMESTAMP: This function returns the current date and time in the timestamp format, which is stored in the LastModified column.
+
+This trigger ensures that any time a row in the Order_info table is updated, the LastModified column automatically reflects the date and time of the last modification, improving data tracking and reliability.
+You said:
+Write a PL/SQL program to count number of employees in a specific
+department and check whether this department have any vacancies or
+not. If any vacancies, how many vacancies are in that department.
+ChatGPT said:
+
+To create a PL/SQL program that counts the number of employees in a specific department, checks if there are vacancies, and displays the number of vacancies if any, we need a few assumptions. Here’s a structure we’ll follow for this solution:
+
+    Table Setup: We'll assume there is a DEPARTMENT table with a column max_employees indicating the maximum number of employees allowed in the department, and an EMPLOYEE table with DNo as a foreign key referencing the department each employee belongs to.
+        DEPARTMENT: DNo, DName, max_employees
+        EMPLOYEE: SSN, Name, DNo (department number)
+
+    PL/SQL Program: The program will:
+        Accept a department number (DNo) as input.
+        Count the number of employees in the department.
+        Check if the current number of employees is less than the maximum allowed for that department (indicating vacancies).
+        If there are vacancies, calculate and display the number of available positions.
+
+Sample PL/SQL Code
+
+Here’s the PL/SQL program to achieve this:
+
+DECLARE
+  v_department_id DEPARTMENT.DNo%TYPE := &department_id;  -- Replace with specific department ID or use & for input
+  v_max_employees DEPARTMENT.max_employees%TYPE;          -- Maximum allowed employees for the department
+  v_employee_count NUMBER := 0;                           -- Number of employees currently in the department
+  v_vacancies NUMBER := 0;                                -- Number of vacancies
+
+BEGIN
+  -- Retrieve maximum allowed employees for the specified department
+  SELECT max_employees
+  INTO v_max_employees
+  FROM DEPARTMENT
+  WHERE DNo = v_department_id;
+
+  -- Count current employees in the specified department
+  SELECT COUNT(*)
+  INTO v_employee_count
+  FROM EMPLOYEE
+  WHERE DNo = v_department_id;
+
+  -- Calculate the number of vacancies
+  v_vacancies := v_max_employees - v_employee_count;
+
+  -- Display the employee count and vacancies
+  DBMS_OUTPUT.PUT_LINE('Department ID: ' || v_department_id);
+  DBMS_OUTPUT.PUT_LINE('Number of Employees: ' || v_employee_count);
+
+  IF v_vacancies > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('Vacancies Available: ' || v_vacancies);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('No vacancies in this department.');
+  END IF;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Department with ID ' || v_department_id || ' not found.');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+END;
+/
+
+Explanation of the Program
+
+    DECLARE Section:
+        v_department_id: Stores the department number we want to check. You can replace &department_id with a specific number or use it as a prompt for input.
+        v_max_employees: Stores the maximum number of employees allowed in the department, retrieved from the DEPARTMENT table.
+        v_employee_count: Stores the current count of employees in the department, calculated in the BEGIN section.
+        v_vacancies: Calculates the difference between v_max_employees and v_employee_count to find the number of vacancies.
+
+    BEGIN Section:
+        The first SELECT statement retrieves the maximum number of employees (max_employees) allowed in the department and stores it in v_max_employees.
+        The second SELECT statement counts the number of employees currently in that department (v_employee_count).
+        The program calculates the vacancies as v_vacancies := v_max_employees - v_employee_count.
+        DBMS_OUTPUT.PUT_LINE displays:
+            The department ID, number of employees, and the number of vacancies if v_vacancies > 0.
+            A message stating no vacancies if v_vacancies is 0 or less.
+
+    EXCEPTION Section:
+        NO_DATA_FOUND: If the department ID does not exist, an error message is displayed.
+        OTHERS: Catches any other unexpected errors and displays the error message.
+
+This PL/SQL program is designed to provide quick feedback on the number of employees and vacancies in a specific department, helping with resource management.
+You said:
+Create a table named "Orders" with fields: order_id (primary key), customer_name,
+order_date, total_amount, and status.
+a.Insert orders for at least two different customers.
+b. Display orders placed in the last month.
+c. Update the status of a specific order.
+d. Calculate the total amount of orders for each customer.
+ChatGPT said:
+
+Here are SQL queries to create the Orders table, insert data, display recent orders, update the order status, and calculate the total amount for each customer.
+Step 1: Create the Orders Table
+
+CREATE TABLE Orders (
+  order_id INT PRIMARY KEY,
+  customer_name VARCHAR(100),
+  order_date DATE,
+  total_amount DECIMAL(10, 2),
+  status VARCHAR(50)
+);
+
+Explanation:
+
+    order_id: Unique identifier for each order (primary key).
+    customer_name: Name of the customer who placed the order.
+    order_date: Date when the order was placed.
+    total_amount: Total amount for the order.
+    status: Status of the order (e.g., 'Pending', 'Shipped', 'Delivered').
+
+Step 2: Insert Orders for at Least Two Different Customers
+(a) Insert sample orders
+
+INSERT INTO Orders (order_id, customer_name, order_date, total_amount, status)
+VALUES (1, 'Alice Johnson', TO_DATE('2023-11-05', 'YYYY-MM-DD'), 150.75, 'Pending');
+
+INSERT INTO Orders (order_id, customer_name, order_date, total_amount, status)
+VALUES (2, 'Bob Smith', TO_DATE('2023-11-15', 'YYYY-MM-DD'), 300.50, 'Shipped');
+
+INSERT INTO Orders (order_id, customer_name, order_date, total_amount, status)
+VALUES (3, 'Alice Johnson', TO_DATE('2023-10-20', 'YYYY-MM-DD'), 450.00, 'Delivered');
+
+Explanation:
+
+    TO_DATE: Converts the date from a string format to the DATE data type.
+    The data represents three orders, with two customers (Alice Johnson and Bob Smith).
+
+Step 3: Display Orders Placed in the Last Month
+(b) Retrieve recent orders
+
+To display orders placed in the last month, we can use the WHERE clause with SYSDATE (current date) and date arithmetic.
+
+SELECT order_id, customer_name, order_date, total_amount, status
+FROM Orders
+WHERE order_date >= ADD_MONTHS(SYSDATE, -1);
+
+Explanation:
+
+    SYSDATE: Retrieves the current date.
+    ADD_MONTHS(SYSDATE, -1): Calculates the date one month before today’s date.
+    WHERE order_date >= ADD_MONTHS(SYSDATE, -1): Filters orders to only include those placed in the last month.
+
+Step 4: Update the Status of a Specific Order
+(c) Update order status
+
+To update the status of a specific order, say order_id = 1, use the UPDATE statement.
+
+UPDATE Orders
+SET status = 'Shipped'
+WHERE order_id = 1;
+
+Explanation:
+
+    SET status = 'Shipped': Updates the status column to 'Shipped'.
+    WHERE order_id = 1: Ensures that only the order with order_id = 1 is updated.
+
+Step 5: Calculate the Total Amount of Orders for Each Customer
+(d) Calculate total amount by customer
+
+To find the total amount of orders placed by each customer, use the SUM function with GROUP BY.
+
+SELECT customer_name, SUM(total_amount) AS total_order_amount
+FROM Orders
+GROUP BY customer_name;
+
+Explanation:
+
+    SUM(total_amount): Sums the total_amount of all orders for each customer.
+    GROUP BY customer_name: Groups the results by customer_name to calculate the total for each customer individually.
+    AS total_order_amount: Assigns an alias to the sum for easier readability in the output.
+
+These steps provide a complete solution for creating and managing orders in the Orders table, handling each part of the specified requirements.
+You said:
+C. Consider the schema for MovieDatabase:
+ACTOR (Act_id, Act_Name, Act_Gender)
+DIRECTOR (Dir_id, Dir_Name,Dir_Phone)
+MOVIES (Mov_id, Mov_Title, Mov_Year, Mov_Lang, Dir_id)
+MOVIE_CAST (Act_id, Mov_id, Role)
+RATING (Mov_id, Rev_Stars)
+Write SQL queries to
+1. List the titles of all movies directed by‘Hitchcock’.
+2. Find the movie names where one or more actors acted in two or moremovies.
+3. List all actors who acted in a movie before 2000 and also in a movie after 2015.
+4. Find the title of movies and number of stars for each movie that has atleast one rating and find the
+highest number of stars that movie received. Sort the result by movie title.
+5. Update rating of all movies directed by ‘Steven Spielberg’ to5.
+Write a trigger to print a statement “new movie is added” when new movie is inserted into the
+movie table.
+ChatGPT said:
+
+Let’s go through the SQL queries and the trigger needed for this MovieDatabase schema.
+MovieDatabase Schema
+
+Tables:
+
+    ACTOR: Stores actor details.
+        Columns: Act_id, Act_Name, Act_Gender
+    DIRECTOR: Stores director details.
+        Columns: Dir_id, Dir_Name, Dir_Phone
+    MOVIES: Stores movie details, including director ID.
+        Columns: Mov_id, Mov_Title, Mov_Year, Mov_Lang, Dir_id
+    MOVIE_CAST: Stores casting information, linking actors to movies with a specific role.
+        Columns: Act_id, Mov_id, Role
+    RATING: Stores ratings for movies.
+        Columns: Mov_id, Rev_Stars
+
+SQL Queries
+1. List the titles of all movies directed by ‘Hitchcock’
+
+SELECT m.Mov_Title
+FROM MOVIES m
+JOIN DIRECTOR d ON m.Dir_id = d.Dir_id
+WHERE d.Dir_Name = 'Hitchcock';
+
+Explanation:
+
+    Joins MOVIES with DIRECTOR to get the director’s name for each movie.
+    Filters results to only include movies directed by Hitchcock.
+
+2. Find the movie names where one or more actors acted in two or more movies
+
+SELECT m.Mov_Title
+FROM MOVIES m
+JOIN MOVIE_CAST mc ON m.Mov_id = mc.Mov_id
+WHERE mc.Act_id IN (
+    SELECT Act_id
+    FROM MOVIE_CAST
+    GROUP BY Act_id
+    HAVING COUNT(DISTINCT Mov_id) >= 2
+);
+
+Explanation:
+
+    A subquery identifies actors who have appeared in two or more movies by grouping Act_id and counting distinct Mov_id entries.
+    The main query joins MOVIES with MOVIE_CAST to retrieve the titles of movies in which these actors have appeared.
+
+3. List all actors who acted in a movie before 2000 and also in a movie after 2015
+
+SELECT a.Act_Name
+FROM ACTOR a
+WHERE a.Act_id IN (
+    SELECT Act_id
+    FROM MOVIE_CAST mc
+    JOIN MOVIES m ON mc.Mov_id = m.Mov_id
+    WHERE m.Mov_Year < 2000
+)
+AND a.Act_id IN (
+    SELECT Act_id
+    FROM MOVIE_CAST mc
+    JOIN MOVIES m ON mc.Mov_id = m.Mov_id
+    WHERE m.Mov_Year > 2015
+);
+
+Explanation:
+
+    This query uses two subqueries:
+        The first subquery finds actors who acted in movies before 2000.
+        The second subquery finds actors who acted in movies after 2015.
+    The WHERE clause ensures that the actor appears in the results only if they are in both subqueries.
+
+4. Find the title of movies and number of stars for each movie that has at least one rating and find the highest number of stars that movie received. Sort the result by movie title.
+
+SELECT m.Mov_Title, r.Rev_Stars, MAX(r.Rev_Stars) OVER (PARTITION BY m.Mov_id) AS Max_Stars
+FROM MOVIES m
+JOIN RATING r ON m.Mov_id = r.Mov_id
+WHERE r.Rev_Stars IS NOT NULL
+ORDER BY m.Mov_Title;
+
+Explanation:
+
+    Joins MOVIES with RATING to get movie titles and their respective ratings.
+    MAX(r.Rev_Stars) OVER (PARTITION BY m.Mov_id) AS Max_Stars calculates the maximum rating for each movie.
+    ORDER BY m.Mov_Title sorts the result by movie title.
+
+5. Update the rating of all movies directed by ‘Steven Spielberg’ to 5
+
+UPDATE RATING r
+SET r.Rev_Stars = 5
+WHERE r.Mov_id IN (
+    SELECT m.Mov_id
+    FROM MOVIES m
+    JOIN DIRECTOR d ON m.Dir_id = d.Dir_id
+    WHERE d.Dir_Name = 'Steven Spielberg'
+);
+
+Explanation:
+
+    The subquery identifies the Mov_id for all movies directed by Steven Spielberg.
+    The UPDATE statement sets the Rev_Stars rating to 5 for these movies.
+
+Trigger to Print a Statement When a New Movie is Inserted
+
+To create a trigger that prints “new movie is added” whenever a new movie is inserted into the MOVIES table, we’ll use a BEFORE INSERT trigger.
+
+CREATE OR REPLACE TRIGGER new_movie_added
+AFTER INSERT ON MOVIES
+FOR EACH ROW
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('New movie is added');
+END;
+/
+
+Explanation:
+
+    CREATE OR REPLACE TRIGGER new_movie_added:
+        Creates a trigger named new_movie_added. If a trigger with this name already exists, it replaces it.
+    AFTER INSERT ON MOVIES:
+        Specifies that this trigger should fire after an INSERT operation on the MOVIES table.
+    FOR EACH ROW:
+        Ensures that the trigger executes once for each row inserted.
+    BEGIN ... END:
+        The DBMS_OUTPUT.PUT_LINE statement inside this block prints "New movie is added" each time a new movie is inserted.
+
+Note: In Oracle, DBMS_OUTPUT.PUT_LINE outputs to the console. Ensure that DBMS_OUTPUT is enabled in the environment to see the output.
+
+
+ChatGPT can make mistakes. Check important info.
